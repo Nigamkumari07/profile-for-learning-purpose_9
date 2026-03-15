@@ -35,6 +35,15 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // Replace "YOUR_PUBLIC_KEY" with your actual EmailJS Public Key
+            emailjs.init({
+                publicKey: "VpLGOSsSIQN26ucqH",
+            });
+        })();
+    </script>
     <style>
         *,
         *::before,
@@ -1468,6 +1477,25 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* ── SPINNER ── */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -1799,16 +1827,23 @@
             <h2 class="sec-title">Let's <span>Connect</span></h2>
             <p class="sec-sub">Have a project? Let's solve it together.</p>
         </div>
-        <div class="contact-box up">
+        <form id="contact-form" class="contact-box up">
             <div class="f-row">
-                <div class="f-grp"><label>Your Name</label><input type="text" placeholder="John Doe"></div>
-                <div class="f-grp"><label>Email Address</label><input type="email" placeholder="john@example.com"></div>
+                <div class="f-grp"><label>Your Name</label><input type="text" id="name" name="name"
+                        placeholder="John Doe" required>
+                </div>
+                <div class="f-grp"><label>Email Address</label><input type="email" id="email" name="email"
+                        placeholder="john@example.com" required>
+                </div>
             </div>
-            <div class="f-grp"><label>Subject</label><input type="text" placeholder="What's this about?"></div>
-            <div class="f-grp"><label>Message</label><textarea placeholder="Tell me about your project..."></textarea>
+            <div class="f-grp"><label>Subject</label><input type="text" id="subject" name="subject"
+                    placeholder="What's this about?" required>
             </div>
-            <button class="f-btn btn-m">Send Message &#9992;</button>
-        </div>
+            <div class="f-grp"><label>Message</label><textarea id="message" name="message"
+                    placeholder="Tell me about your project..." required></textarea>
+            </div>
+            <button type="submit" id="submit-btn" class="f-btn btn-m">Send Message &#9992;</button>
+        </form>
     </section>
 
     <!-- FOOTER -->
@@ -2335,6 +2370,56 @@
             sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) cur2 = s.id; });
             navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur2));
         }, { passive: true });
+
+        // ══════════════════════════════════════════════════
+        //  EMAILJS FORM SUBMISSION
+        // ══════════════════════════════════════════════════
+        const contactForm = document.getElementById('contact-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (contactForm && submitBtn) {
+            contactForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                // Initial button state
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Sending... <span class="spinner"></span>';
+
+                emailjs.send(
+                    'service_q79e4ev',
+                    'template_1w05vnb',
+                    {
+                        name: event.target.elements.name.value,
+                        from_name: event.target.elements.name.value,
+                        email: event.target.elements.email.value,
+                        reply_to: event.target.elements.email.value,
+                        subject: event.target.elements.subject.value,
+                        message: event.target.elements.message.value
+                    },
+                    'VpLGOSsSIQN26ucqH'
+                )
+                    .then(() => {
+                        submitBtn.innerHTML = 'Sent Successfully! ✅';
+                        submitBtn.style.background = 'var(--green)';
+                        contactForm.reset();
+                        setTimeout(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                            submitBtn.style.background = '';
+                        }, 5000);
+                    }, (error) => {
+                        console.error('EmailJS FAILED...', error);
+                        submitBtn.innerHTML = 'Error! ❌';
+                        submitBtn.style.background = 'var(--red)';
+                        setTimeout(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                            submitBtn.style.background = '';
+                        }, 5000);
+                    });
+            });
+        }
     </script>
 </body>
 
