@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopsyra - AI Shopping Assistant | Nigam Kumari</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root {
+      --red: #FF5800; --blue: #0051A2; --yellow: #FFD500; --green: #009B48; --orange: #C41E3A;
+      --bg: #08080f; --bg2: #0e0e18; --text: #e8e8f2; --dim: #7a7a99;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+    
+    nav { position:fixed; top:0; left:0; right:0; z-index:999; padding:1rem 2rem; background:rgba(8,8,15,.95); backdrop-filter:blur(24px); display:flex; gap:1rem; }
+    .logo { font-weight:700; color:var(--text); text-decoration:none; }
+    
+    .chat-container { display:flex; height:100vh; }
+    .sidebar { width:350px; background:var(--bg2); border-right:1px solid rgba(255,255,255,.1); overflow:auto; padding:1rem; }
+    .main-chat { flex:1; display:flex; flex-direction:column; }
+    
+    .chat-header { padding:1.5rem 2rem; background:linear-gradient(135deg,var(--blue),var(--yellow)); color:white; text-align:center; }
+    .chat-messages { flex:1; padding:2rem; overflow:auto; }
+    .chat-input { padding:2rem; background:var(--bg2); border-top:1px solid rgba(255,255,255,.1); }
+    
+    .message { margin-bottom:1.5rem; display:flex; gap:1rem; }
+    .message.user { flex-direction:row-reverse; }
+    .message-bubble { max-width:70%; padding:1rem 1.5rem; border-radius:20px; position:relative; }
+    .user .message-bubble { background:linear-gradient(135deg,var(--yellow),#ffd500); color:#333; }
+    .ai .message-bubble { background:rgba(255,255,255,.1); backdrop-filter:blur(10px); }
+    
+    .product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-top:1rem; }
+    .product-card { background:rgba(255,255,255,.1); border-radius:15px; padding:1.5rem; cursor:pointer; transition:all .3s; border:1px solid rgba(255,255,255,.2); }
+    .product-card:hover { transform:translateY(-5px); box-shadow:0 20px 40px rgba(0,0,0,.3); border-color:var(--yellow); }
+    .product-img { width:100%; height:150px; background:linear-gradient(135deg,var(--blue),var(--green)); border-radius:10px; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; font-size:3rem; }
+    .product-name { font-weight:600; margin-bottom:.5rem; }
+    .product-price { color:var(--yellow); font-size:1.2rem; font-weight:700; }
+    
+    input[type="text"] { width:100%; padding:1rem 1.5rem; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.1); border-radius:25px; color:var(--text); font-size:1rem; }
+    input:focus { outline:none; border-color:var(--yellow); box-shadow:0 0 0 3px rgba(255,213,0,.3); }
+    button { padding:.8rem 1.5rem; background:linear-gradient(135deg,var(--green),var(--blue)); color:white; border:none; border-radius:25px; cursor:pointer; margin-left:1rem; font-weight:600; }
+    
+    .cart-badge { position:fixed; top:1rem; right:1rem; background:var(--yellow); color:#333; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-weight:700; cursor:pointer; box-shadow:0 10px 25px rgba(255,213,0,.4); z-index:1000; }
+    .cart-modal { position:fixed; inset:0; background:rgba(0,0,0,.8); backdrop-filter:blur(10px); display:none; z-index:1001; }
+    .cart-content { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:500px; max-height:80vh; background:var(--bg2); border-radius:20px; overflow:auto; }
+    .cart-header { padding:2rem; text-align:center; border-bottom:1px solid rgba(255,255,255,.1); }
+    .cart-item { display:flex; gap:1rem; padding:1.5rem 2rem; border-bottom:1px solid rgba(255,255,255,.05); }
+    .cart-total { padding:2rem; text-align:center; font-size:1.5rem; font-weight:700; color:var(--yellow); }
+    
+    @media(max-width:768px) { .sidebar { width:100%; position:absolute; z-index:10; transform:translateX(-100%); transition:transform .3s; } .chat-container.opened .sidebar { transform:translateX(0); } }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">🧩 Portfolio</a>
+    <a href="potli.html" class="logo">💰 Potli Budget</a>
+  </nav>
+  
+  <div class="cart-badge" id="cartBadge">0</div>
+  <div class="cart-modal" id="cartModal">
+    <div class="cart-content">
+      <div class="cart-header">
+        <h2>🛒 Shopping Cart</h2>
+        <div>Total: <span id="cartTotal">₹0</span></div>
+      </div>
+      <div id="cartItems"></div>
+      <div class="cart-total" id="finalTotal">₹0 - Complete Purchase</div>
+    </div>
+  </div>
+  
+  <div class="chat-container">
+    <div class="sidebar" id="sidebar">
+      <h3>🔥 Featured Products</h3>
+      <div class="product-grid" id="productGrid"></div>
+    </div>
+    
+    <div class="main-chat">
+      <div class="chat-header">
+        <h1>🤖 Shopsyra AI</h1>
+        <p>Your smart shopping assistant</p>
+      </div>
+      
+      <div class="chat-messages" id="messages">
+        <div class="message ai">
+          <div class="message-bubble">
+            Hi! I'm Shopsyra, your AI shopping assistant. Ask me about products, prices, or recommendations! Try "show me phones under 20000" or "best laptops" 😊
+          </div>
+        </div>
+      </div>
+      
+      <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="Ask about products... (or press / to see commands)" autocomplete="off">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Products catalog
+    const products = [
+      {id:1, name:'iPhone 15', price:79999, category:'phones', img:'📱'},
+      {id:2, name:'Samsung Galaxy S24', price:69999, category:'phones', img:'📱'},
+      {id:3, name:'OnePlus 12', price:64999, category:'phones', img:'📱'},
+      {id:4, name:'MacBook Air M2', price:112900, category:'laptops', img:'💻'},
+      {id:5, name:'Dell XPS 13', price:89990, category:'laptops', img:'💻'},
+      {id:6, name:'Nike Air Max', price:12999, category:'shoes', img:'👟'},
+      {id:7, name:'Adidas Ultraboost', price:14999, category:'shoes', img:'👟'},
+      {id:8, name:'Levi\'s 511 Jeans', price:3999, category:'clothing', img:'👕'},
+      {id:9, name:'Ray-Ban Wayfarer', price:12999, category:'accessories', img:'🕶️'},
+      {id:10, name:'Apple Watch Ultra', price:79900, category:'wearables', img:'⌚'}
+    ];
+    
+    let cart = JSON.parse(localStorage.getItem('shopsyraCart')) || [];
+    
+    function saveCart() {
+      localStorage.setItem('shopsyraCart', JSON.stringify(cart));
+    }
+    
+    function renderProducts() {
+      document.getElementById('productGrid').innerHTML = products.map(p => `
+        <div class="product-card" onclick="addToCart(${p.id})">
+          <div class="product-img">${p.img}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-price">₹${p.price.toLocaleString('en-IN')}</div>
+        </div>
+      `).join('');
+    }
+    
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      cart.push(product);
+      saveCart();
+      updateCartBadge();
+      addMessage('ai', `✅ Added ${product.name} to cart! Current total: ₹${getCartTotal().toLocaleString('en-IN')}`);
+    }
+    
+    function getCartTotal() {
+      return cart.reduce((sum, item) => sum + item.price, 0);
+    }
+    
+    function updateCartBadge() {
+      const badge = document.getElementById('cartBadge');
+      badge.textContent = cart.length;
+      badge.style.background = cart.length ? 'var(--red)' : 'var(--yellow)';
+    }
+    
+    function addMessage(sender, text, products=[]) {
+      const messages = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `message ${sender}`;
+      div.innerHTML = `<div class="message-bubble">${text}</div>`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      
+      if (products.length) {
+        const grid = document.createElement('div');
+        grid.className = 'product-grid';
+        grid.innerHTML = products.map(p => `
+          <div class="product-card" onclick="addToCart(${p.id})" style="margin-top:1rem;">
+            <div class="product-img">${p.img}</div>
+            <div>${p.name}</div>
+            <div style="color:var(--yellow);">₹${p.price.toLocaleString('en-IN')}</div>
+          </div>
+        `).join('');
+        div.appendChild(grid);
+      }
+    }
+    
+    function aiRespond(message) {
+      const lower = message.toLowerCase();
+      
+      if (lower.includes('phone') || lower.includes('mobile')) {
+        const phones = products.filter(p => p.category === 'phones');
+        addMessage('ai', 'Here are our best smartphones:', phones.slice(0,3));
+      }
+      else if (lower.includes('laptop')) {
+        const laptops = products.filter(p => p.category === 'laptops');
+        addMessage('ai', `Great choice! Top laptops:`, laptops);
+      }
+      else if (lower.includes('under') || lower.includes('below')) {
+        const price = parseInt(lower.match(/(\d+)/)?.[0] || 0);
+        const cheap = products.filter(p => p.price <= price).slice(0,3);
+        addMessage('ai', cheap.length ? `Found ${cheap.length} items under ₹${price.toLocaleString()}:` : `No items under ₹${price.toLocaleString()}. Try higher budget!`, cheap);
+      }
+      else if (lower.includes('shoe') || lower.includes('sneaker')) {
+        const shoes = products.filter(p => p.category === 'shoes');
+        addMessage('ai', '🏃 Trending footwear:', shoes);
+      }
+      else if (lower === '/products' || lower === '/catalog') {
+        addMessage('ai', 'Here\'s our full catalog:', products.slice(0,6));
+      }
+      else if (lower.includes('recommend') || lower.includes('suggest')) {
+        const recs = products.sort(() => Math.random() - 0.5).slice(0,3);
+        addMessage('ai', '💡 My top recommendations:', recs);
+      }
+      else if (lower.includes('cart')) {
+        addMessage('ai', `Your cart has ${cart.length} items worth ₹${getCartTotal().toLocaleString('en-IN')}. Click cart icon 🛒`);
+      }
+      else {
+        addMessage('ai', `I understand you want ${message.split(' ')[0]} related products! Try "phones", "laptops under 50000", or "/products" for full catalog. What specifically? 😊`);
+      }
+    }
+    
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      addMessage('user', text);
+      input.value = '';
+      
+      setTimeout(() => aiRespond(text), 800);
+    }
+    
+    // Event listeners
+    document.getElementById('messageInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+    
+    document.getElementById('cartBadge').onclick = () => {
+      document.getElementById('cartModal').style.display = 'block';
+      renderCart();
+    };
+    
+    document.getElementById('cartModal').onclick = e => {
+      if (e.target.classList.contains('cart-modal')) document.getElementById('cartModal').style.display = 'none';
+    };
+    
+    function renderCart() {
+      const itemsEl = document.getElementById('cartItems');
+      const total = getCartTotal();
+      
+      if (cart.length === 0) {
+        itemsEl.innerHTML = '<div style="padding:3rem;text-align:center;color:var(--dim);">Your cart is empty 🛒</div>';
+      } else {
+        itemsEl.innerHTML = cart.map(item => `
+          <div class="cart-item">
+            <div style="font-size:2rem;">${item.img}</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;">${item.name}</div>
+              <div style="color:var(--dim);font-size:.9rem;">₹${item.price.toLocaleString('en-IN')}</div>
+            </div>
+            <button onclick="removeFromCart(${item.id})" style="background:var(--red);padding:.5rem 1rem;border-radius:20px;">Remove</button>
+          </div>
+        `).join('');
+      }
+      
+      document.getElementById('cartTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+      document.getElementById('finalTotal').textContent = `₹${total.toLocaleString('en-IN')} - Complete Purchase ✅`;
+    }
+    
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      saveCart();
+      updateCartBadge();
+      renderCart();
+    }
+    
+    // Init
+    renderProducts();
+    updateCartBadge();
+  </script>
+</body>
+</html>

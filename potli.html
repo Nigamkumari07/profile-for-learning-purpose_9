@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potli - Budget Tracker | Nigam Kumari</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root {
+      --red: #FF5800; --blue: #0051A2; --yellow: #FFD500; --green: #009B48; --orange: #C41E3A;
+      --bg: #08080f; --bg2: #0e0e18; --text: #e8e8f2; --dim: #7a7a99; --success: #00d4aa;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); }
+    
+    nav { position:fixed; top:0; left:0; right:0; z-index:999; padding:1rem 2rem; background:rgba(8,8,15,.95); backdrop-filter:blur(24px); display:flex; gap:1rem; }
+    .logo { display:flex; align-items:center; gap:12px; font-weight:700; font-size:1.1rem; color:var(--text); text-decoration:none; }
+    .logo-img { width:32px; height:32px; border-radius:6px; box-shadow:0 4px 16px rgba(255,88,0,.3); transition:all .3s; animation:logoFloat 3s ease-in-out infinite; }
+    .logo-img:hover { transform:rotateY(360deg) scale(1.1); box-shadow:0 8px 24px rgba(255,213,0,.5); }
+    @keyframes logoFloat { 0%,100%{transform:translateY(0) rotateY(0deg);} 50%{transform:translateY(-2px) rotateY(180deg);} }
+    
+    .container { max-width:800px; margin:0 auto; padding:2rem; padding-top:5rem; }
+    h1 { text-align:center; font-size:2.5rem; background:linear-gradient(135deg,var(--yellow),var(--orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:1rem; }
+    
+    .balance-card { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:2rem; text-align:center; margin-bottom:2rem; }
+    .balance { font-size:3rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .positive { color:var(--success); text-shadow:0 0 20px var(--success); }
+    .negative { color:#ff6b6b; text-shadow:0 0 20px #ff6b6b; }
+    
+    .potli-visual { height:200px; margin:1rem 0; position:relative; }
+    .potli { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:120px; height:120px; background:radial-gradient(circle at 30% 30%, gold 0%, #d4a500 50%, #b8860b 100%); border-radius:50% 50% 50% 50%/60% 60% 40% 40%; box-shadow:0 20px 40px rgba(212,165,0,.4); animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} }
+    
+    .form-row { display:grid; grid-template-columns:1fr 1fr auto; gap:1rem; margin-bottom:1rem; align-items:end; }
+    .input-group { display: flex; flex-direction: column; }
+    .field-error { color:#ff6b6b; font-size:.85rem; margin-top:0.25rem; min-height:1.2rem; opacity:0; transition:all .2s; }
+    .field-error.show { opacity:1; }
+    .form-row.shake { animation:shake .5s; }
+    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+    input.error, select.error { border-color:#ff6b6b; box-shadow:0 0 0 3px rgba(255,107,107,.2); }
+    input, select { padding:1rem; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.05); color:var(--text); border-radius:12px; font-size:1rem; transition:all .3s; }
+    input:focus, select:focus { outline:none; border-color:var(--yellow); box-shadow:0 0 0 3px rgba(255,213,0,.2); }
+    button { padding:1rem 1.5rem; background:linear-gradient(135deg,var(--red),var(--orange)); color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer; transition:all .3s; }
+    button:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 25px rgba(255,88,0,.4); }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    
+    .transactions { background:rgba(255,255,255,.03); border-radius:20px; padding:1.5rem; margin-top:2rem; }
+    .trans-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; font-weight:600; color:var(--yellow); }
+    .trans-list { max-height:400px; overflow:auto; }
+    .trans-item { display:flex; justify-content:space-between; padding:1rem; margin-bottom:.5rem; background:rgba(255,255,255,.05); border-radius:10px; }
+    .trans-details { display:flex; gap:1rem; }
+    .trans-amount.positive { color:var(--success); } .trans-amount.negative { color:#ff6b6b; }
+    
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-top:2rem; }
+    .stat-card { background:rgba(255,255,255,.05); border-radius:15px; padding:1.5rem; text-align:center; }
+    .stat-num { font-size:2rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    
+    @media(max-width:768px) { .form-row { grid-template-columns:1fr; } .container { padding:1rem; } h1 { font-size:2rem; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">
+      <img src="logo.png" alt="Nigam Kumari Logo" class="logo-img" loading="lazy">
+      <span>🧩 Portfolio</span>
+    </a>
+    <a href="shopsyra.html" class="logo">🛒 Shopsyra Demo</a>
+  </nav>
+  
+  <div class="container">
+    <h1>💰 Potli Budget Tracker</h1>
+    <p style="text-align:center;color:var(--dim);margin-bottom:2rem;">Traditional Indian Potli system • Track every paisa</p>
+    
+    <div class="balance-card">
+      <div class="balance positive" id="balance">₹0</div>
+      <div>Current Potli Balance</div>
+      <div class="potli-visual">
+        <div class="potli" id="potliViz"></div>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="input-group">
+        <input id="desc" placeholder="What did you spend on? (optional)">
+        <div id="descError" class="field-error"></div>
+      </div>
+      <div class="input-group">
+        <input id="amount" type="number" placeholder="Amount" step="0.01" min="0.01">
+        <div id="amountError" class="field-error"></div>
+      </div>
+      <select id="type">
+        <option value="expense">💸 Expense</option>
+        <option value="income">💰 Income</option>
+      </select>
+      <select id="category">
+        <option>Food 🍛</option><option>Transport 🚗</option><option>Shopping 🛍️</option>
+        <option>Entertainment 🎬</option><option>Salary 💼</option><option>Other ❓</option>
+      </select>
+      <button id="addBtn" onclick="addTransaction()">Add to Potli</button>
+      <button id="resetBtn" onclick="resetPotli()" style="background:linear-gradient(135deg,#ff6b6b,#ff8e8e);padding:1rem;margin-left:1rem;">🗑️ Reset Potli</button>
+      <button id="exportBtn" onclick="exportData()" style="background:linear-gradient(135deg,var(--success),#00aa88);padding:1rem;">📥 Export</button>
+    </div>
+    
+    <div class="transactions">
+      <div class="trans-header">
+        <span>Recent Transactions</span>
+        <span id="transCount">0</span>
+      </div>
+      <div class="trans-list" id="transList"></div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="totalIncome">₹0</div>
+        <div>Total Income 💰</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="totalExpense">₹0</div>
+        <div>Total Expense 💸</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="avgTrans">₹0</div>
+        <div>Net Avg Trans</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+let transactions = cleanupData(JSON.parse(localStorage.getItem('potliData') || '[]'));
+if (localStorage.getItem('potliVersion') !== '2.0') {
+  console.log('🔄 Migrating to v2.0 storage format');
+  saveData();
+}
+
+// Debug: Log loaded data
+
+    
+function saveData() {
+  localStorage.setItem('potliData', JSON.stringify(transactions));
+  localStorage.setItem('potliVersion', '2.0'); // Versioning for future migrations
+console.log(`💾 Saved ${transactions.length} transactions`);
+}
+
+function cleanupData(data) {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(t => t && Number.isFinite(t.amount) && t.amount > 0 && t.id && Number.isFinite(t.id))
+    .map(t => ({...t, amount: Number(t.amount), id: Number(t.id)}))
+    .sort((a,b) => b.id - a.id); // Newest first
+}
+
+function calculateBalance(trans) {
+  return trans.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+}
+    
+    function updateBalance() {
+      // Single pass reduce for ALL stats - FIXED PERFORMANCE
+      const stats = transactions.reduce((acc, t) => {
+        if (t.type === 'income') {
+          acc.income += t.amount;
+          acc.countIn++;
+        } else {
+          acc.expense += t.amount;
+          acc.countEx++;
+        }
+        return acc;
+      }, { income: 0, expense: 0, countIn: 0, countEx: 0 });
+      
+      const balance = stats.income - stats.expense;
+      const avgIncome = stats.countIn ? (stats.income / stats.countIn).toFixed(0) : 0;
+      const avgExpense = stats.countEx ? (stats.expense / stats.countEx).toFixed(0) : 0;
+      const netAvg = transactions.length ? balance / transactions.length : 0;
+      
+      // Update balance display
+      const balanceEl = document.getElementById('balance');
+      balanceEl.textContent = `₹${balance.toLocaleString('en-IN')}`;
+      balanceEl.className = balance >= 0 ? 'balance positive' : 'balance negative';
+      
+      // Potli animation
+      const potliViz = document.getElementById('potliViz');
+      const scale = Math.max(0.5, Math.min(2.0, 1 + Math.log10(Math.max(1, Math.abs(balance))) * 0.2));
+      potliViz.style.transform = `translateX(-50%) scale(${scale})`;
+      
+      // Update stat cards - CLEAN SEPARATION
+      document.getElementById('totalIncome').textContent = `₹${stats.income.toLocaleString('en-IN')}`;
+      document.getElementById('totalIncome').style.color = 'var(--success)';
+      
+      document.getElementById('totalExpense').textContent = `₹${stats.expense.toLocaleString('en-IN')}`;
+      document.getElementById('totalExpense').style.color = '#ff6b6b';
+      
+      const avgEl = document.getElementById('avgTrans');
+      avgEl.textContent = `₹${netAvg.toFixed(0)}`;
+      avgEl.style.color = netAvg >= 0 ? 'var(--success)' : '#ff6b6b';
+      avgEl.parentElement.querySelector('.stat-num').style.fontSize = '1.4rem';
+    }
+    
+    function renderTransactions() {
+      const list = document.getElementById('transList');
+      list.innerHTML = transactions.slice(-10).reverse().map(t => `
+        <div class="trans-item">
+          <div class="trans-details">
+            <span>${t.category}</span>
+            <span style="color:var(--dim);font-size:.9rem;">${t.desc}</span>
+          </div>
+          <div>
+            <span class="trans-amount ${t.type === 'income' ? 'positive' : 'negative'}">
+              ${t.type === 'income' ? '+' : '-'}₹${t.amount.toLocaleString('en-IN')}
+            </span>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('transCount').textContent = transactions.length;
+    }
+    
+    function showFieldError(fieldId, msg) {
+      const errorEl = document.getElementById(fieldId + 'Error');
+      const field = document.getElementById(fieldId);
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+      field.classList.add('error');
+      setTimeout(() => {
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
+        field.classList.remove('error');
+      }, 4000);
+    }
+    
+    function clearForm() {
+      document.getElementById('desc').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('type').value = 'expense';
+      document.getElementById('category').value = 'Food 🍛';
+      document.getElementById('desc').focus();
+    }
+    
+function addTransaction() {
+      const descEl = document.getElementById('desc');
+      const amountEl = document.getElementById('amount');
+      const typeEl = document.getElementById('type');
+      const type = typeEl.value;
+      const category = document.getElementById('category').value;
+      const formRow = document.querySelector('.form-row');
+      
+      const rawAmount = amountEl.value.trim().replace(/,/g, '');
+      const amount = Number(rawAmount);
+      
+      if (isNaN(amount) || amount < 0.01 || amount > 1000000) {
+        amountEl.classList.add('error');
+        showFieldError('amount', amount < 0 ? 'Amount cannot be negative' : 
+          amount > 1000000 ? 'Max ₹10L' : 'Enter valid amount ≥ ₹0.01');
+        formRow.classList.add('shake');
+        setTimeout(() => formRow.classList.remove('shake'), 500);
+        amountEl.focus();
+        amountEl.select();
+        return;
+      }
+      
+      if (type === 'income' && amount < 0) {
+        showFieldError('amount', 'Income cannot be negative');
+        return;
+      }
+      
+      // Clear previous errors first
+      ['desc', 'amount'].forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('error');
+        const errEl = document.getElementById(id + 'Error');
+        errEl.classList.remove('show');
+        errEl.textContent = '';
+      });
+      
+// Success - add transaction
+const newTrans = { 
+  id: Date.now(), 
+  desc: descEl.value.trim() || 'Quick entry', 
+  amount, 
+  type, 
+  category, 
+  date: new Date().toLocaleString('en-IN') 
+};
+transactions.unshift(newTrans); // Add to front (newest first)
+
+      
+      saveData();
+      updateBalance();
+      renderTransactions();
+      
+      // Enhanced success feedback
+      const balanceCard = document.querySelector('.balance-card');
+      balanceCard.style.transform = 'scale(1.05)';
+      balanceCard.style.boxShadow = '0 0 30px var(--success)';
+      setTimeout(() => {
+        balanceCard.style.transform = '';
+        balanceCard.style.boxShadow = '';
+      }, 300);
+      
+      clearForm();
+    }
+    
+// Add export/reset functions
+function resetPotli() {
+  if (!confirm('Reset ALL transactions? This cannot be undone.')) return;
+  transactions = [];
+  saveData();
+  updateBalance();
+  renderTransactions();
+
+}
+
+function exportData() {
+  const dataStr = JSON.stringify(transactions, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `potli-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Import (drag-drop later if needed)
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        transactions = cleanupData(imported);
+        saveData();
+        updateBalance();
+        renderTransactions();
+console.log(`📤 Imported ${transactions.length} transactions`);
+      } catch(err) {
+        alert('Invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
+  }
+});
+
+// Init
+updateBalance();
+renderTransactions();
+    
+    // Enter key submit
+    document.addEventListener('keypress', e => {
+      if (e.key === 'Enter' && document.activeElement.tagName !== 'BUTTON') addTransaction();
+    });
+  </script>
+</body>
+</html>

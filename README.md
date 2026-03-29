@@ -1,32 +1,32 @@
-# 🧩 Rubik's Cube Developer Portfolio
+# 🧩 Nigam Kumari's Rubik's Cube Portfolio
 
 A modern interactive developer portfolio inspired by the logic and elegance of a Rubik's Cube.
 
-The website features a fully interactive **3D Rubik’s Cube**, smooth animations, dynamic UI elements, and a clean responsive layout to showcase skills and projects.
+The website features a fully interactive **3D Rubik's Cube**, smooth animations, dynamic UI elements, and a clean responsive layout to showcase Nigam Kumari's skills and projects.
 
 ---
 
 ## ✨ Features
 
-• Interactive **3D Rubik's Cube** built from 27 cubies  
-• Drag to rotate the cube  
+• Interactive **3D Rubik's Cube** built from 27 cubies (pure vanilla JS/CSS)  
+• Drag to rotate the cube with inertia  
 • Scramble and Solve functionality  
-• Smooth animations and modern UI  
+• Smooth layer-by-layer animations  
 • Animated skill cards  
 • Interactive project showcase  
-• Custom cursor and progress indicator  
+• Custom cursor and scroll progress  
 • Responsive single-page layout  
-• Clean and minimal design
+• EmailJS contact form
 
 ---
 
 ## 🛠 Tech Stack
 
 - **HTML5**
-- **CSS3**
-- **JavaScript**
-- **Three.js style 3D cube rendering**
-- Canvas animations
+- **CSS3** (3D transforms, animations)
+- **Vanilla JavaScript** (no frameworks)
+- **Canvas particle system**
+- **EmailJS** (contact form)
 
 ---
 
@@ -34,27 +34,43 @@ The website features a fully interactive **3D Rubik’s Cube**, smooth animation
 
 The portfolio includes the following sections:
 
-- **Hero** – Introduction and interactive cube  
-- **About** – Developer background and statistics  
-- **Skills** – Technology stack visualization  
-- **Projects** – Featured work showcase  
-- **Contact** – Contact form
+- **Hero** – Introduction + live interactive cube
+- **About** – Developer background and stats
+- **Skills** – Tech stack with 3D visualization
+- **Projects** – Featured work showcase
+- **Contact** – Working contact form
 
 ---
 
 ## 🎮 Cube Controls
 
-| Action | Result |
-|------|------|
-| Drag | Rotate the cube |
-| Scramble button | Random cube state |
-| Solve button | Automatically solve cube |
+| Action       | Result                    |
+| ------------ | ------------------------- |
+| **Drag**     | Rotate entire cube        |
+| **Scramble** | 14-move random scramble   |
+| **Solve**    | Reverse history animation |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-Clone the repository:
+1. **Download/Clone** this repo
+2. **Open** `index.html` in any browser
+3. **No setup required** – fully static
 
 ```bash
-git clone https://github.com/Brahmpreett/rubikscube.git
+# Or serve locally
+npx serve .  # or python -m http.server 8000
+```
+
+---
+
+## 📱 Responsive
+
+✅ Desktop, tablet, mobile optimized  
+✅ Touch drag support  
+✅ Optimized animations
+
+---
+
+© 2025 Nigam Kumari. Built with ❤️ and 3D transforms.
